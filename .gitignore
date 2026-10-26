@@ -31,3 +31,5 @@ dist/
 Thumbs.db
 .pytest_cache/
 .coverage
+
+frontend/.git-backup/
