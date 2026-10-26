@@ -1,0 +1,151 @@
+{
+  "data_root": "E:\\project folder\\HealthCure\\datasets",
+  "xray": {
+    "root": "E:\\project folder\\HealthCure\\datasets\\chest_xray",
+    "class_counts_per_split": {
+      "train": {
+        "NORMAL": 1341,
+        "PNEUMONIA": 3875
+      },
+      "val": {
+        "NORMAL": 8,
+        "PNEUMONIA": 8
+      },
+      "test": {
+        "NORMAL": 234,
+        "PNEUMONIA": 390
+      }
+    },
+    "image_size": {
+      "n_images": 5856,
+      "width": {
+        "count": 5856,
+        "min": 384.0,
+        "max": 2916.0,
+        "mean": 1327.880806010929,
+        "median": 1281.0
+      },
+      "height": {
+        "count": 5856,
+        "min": 127.0,
+        "max": 2713.0,
+        "mean": 970.6890368852459,
+        "median": 888.0
+      },
+      "by_split": {
+        "train": 5216,
+        "val": 16,
+        "test": 624
+      }
+    }
+  },
+  "text": {
+    "source": "E:\\project folder\\HealthCure\\datasets\\Symptom2Disease.csv",
+    "n_rows": 1200,
+    "n_labels": 24,
+    "label_counts": {
+      "Acne": 50,
+      "Arthritis": 50,
+      "Bronchial Asthma": 50,
+      "Cervical spondylosis": 50,
+      "Chicken pox": 50,
+      "Common Cold": 50,
+      "Dengue": 50,
+      "Dimorphic Hemorrhoids": 50,
+      "Fungal infection": 50,
+      "Hypertension": 50,
+      "Impetigo": 50,
+      "Jaundice": 50,
+      "Malaria": 50,
+      "Migraine": 50,
+      "Pneumonia": 50,
+      "Psoriasis": 50,
+      "Typhoid": 50,
+      "Varicose Veins": 50,
+      "allergy": 50,
+      "diabetes": 50,
+      "drug reaction": 50,
+      "gastroesophageal reflux disease": 50,
+      "peptic ulcer disease": 50,
+      "urinary tract infection": 50
+    },
+    "text_length_chars": {
+      "count": 1200,
+      "min": 59.0,
+      "max": 317.0,
+      "mean": 171.85166666666666,
+      "median": 170.0
+    }
+  },
+  "heart": {
+    "source": "E:\\project folder\\HealthCure\\datasets\\Heartdisease-dataset\\processed.cleveland.data",
+    "n_rows": 303,
+    "class_balance": {
+      "0": 164,
+      "1": 139
+    },
+    "missing_values": {
+      "age": 0,
+      "sex": 0,
+      "cp": 0,
+      "trestbps": 0,
+      "chol": 0,
+      "fbs": 0,
+      "restecg": 0,
+      "thalach": 0,
+      "exang": 0,
+      "oldpeak": 0,
+      "slope": 0,
+      "target": 0,
+      "thal": 2,
+      "ca": 4
+    }
+  },
+  "diabetes": {
+    "source": "E:\\project folder\\HealthCure\\datasets\\dataset_37_diabetes.arff",
+    "n_rows": 768,
+    "class_balance": {
+      "0": 500,
+      "1": 268
+    },
+    "missing_values": {
+      "Pregnancies": 0,
+      "Glucose": 0,
+      "BloodPressure": 0,
+      "SkinThickness": 0,
+      "Insulin": 0,
+      "BMI": 0,
+      "DiabetesPedigreeFunction": 0,
+      "Age": 0,
+      "Outcome": 0
+    },
+    "zeros_as_missing": {
+      "Glucose": 5,
+      "BMI": 11,
+      "BloodPressure": 35,
+      "SkinThickness": 227,
+      "Insulin": 374
+    },
+    "pima_zero_as_missing_columns": [
+      "Glucose",
+      "BloodPressure",
+      "SkinThickness",
+      "Insulin",
+      "BMI"
+    ]
+  },
+  "figures": [
+    "E:\\project folder\\HealthCure\\reports\\figures\\xray_class_counts.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\xray_sample_grid.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\xray_size_distribution.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\text_label_counts.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\text_length_histogram.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\heart_class_balance.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\diabetes_class_balance.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\missing_values.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\heart_correlation_heatmap.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\diabetes_correlation_heatmap.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\heart_feature_distributions.png",
+    "E:\\project folder\\HealthCure\\reports\\figures\\diabetes_feature_distributions.png"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "product": "HealthCure",
+  "version": "0.1.0",
+  "intended_use": "Educational clinical decision support: fuse a chest X-ray, free-text symptom notes, and tabular heart or diabetes features into an explainable report. Not a medical device.",
+  "disclaimer": "Outputs are not a diagnosis, prescription, or treatment plan. Always consult a qualified clinician.",
+  "modalities": [
+    {
+      "id": "image",
+      "name": "Chest X-ray",
+      "version": "resnet50-v1",
+      "architecture": "ResNet50 (primary) with a tiny CNN baseline; Grad-CAM explanations",
+      "task": "Binary classification: NORMAL vs PNEUMONIA",
+      "training_data": "Pediatric chest X-ray dataset (Kermany / Guangzhou), JPEG images resized to 224×224. Current metrics were recorded in quick-mode on a small held-out split (n_test ≈ 32).",
+      "evaluation_set": "Held-out test split from the same source; see Performance for confusion matrices and ROC AUC.",
+      "known_failure_modes": [
+        "Adult or portable ICU films differ from the pediatric training distribution.",
+        "Devices, text overlays, and rotated or cropped images can distract Grad-CAM.",
+        "Viral vs bacterial pneumonia is not distinguished; other findings (effusion, masses) are out of scope.",
+        "Quick-mode metrics are not a substitute for a full external validation."
+      ],
+      "intended_use": "Highlight regions that influence a pneumonia vs normal score.",
+      "out_of_scope": [
+        "CT, MRI, or non-chest radiographs",
+        "Screening asymptomatic patients",
+        "Treatment recommendations"
+      ]
+    },
+    {
+      "id": "text",
+      "name": "Symptom notes",
+      "version": "distilbert-v1",
+      "architecture": "DistilBERT (and logistic regression baseline) with LIME word attributions",
+      "task": "Multi-class symptom-text classification (24 labels including Pneumonia, diabetes, Hypertension, Common Cold)",
+      "training_data": "Symptom-description corpus with a label and free-text column. Quick-mode used a few hundred rows (n_test ≈ 24).",
+      "evaluation_set": "Held-out text split; macro F1 and confusion matrices are on the Performance page.",
+      "known_failure_modes": [
+        "Short, misspelled, or mixed-language notes reduce LIME stability.",
+        "Labels are coarse disease names, not ICD codes or severity.",
+        "Mentions of family history or negations ('no cough') can be misread.",
+        "Not trained on clinical notes with abbreviations or EHR templates."
+      ],
+      "intended_use": "Surface which words pushed the symptom classifier toward a label.",
+      "out_of_scope": [
+        "Full EHR documents",
+        "Medication extraction",
+        "Triage acuity scores"
+      ]
+    },
+    {
+      "id": "tabular",
+      "name": "Heart and diabetes risk",
+      "version": "tabular-v1",
+      "architecture": "Logistic regression, random forest, XGBoost, and MLP with SHAP contributions (primary model is the best validated tabular estimator)",
+      "task": "Binary risk scoring on Cleveland heart disease features and Pima-style diabetes features",
+      "training_data": "UCI Cleveland heart (303 rows, 13 features) and Pima Indians Diabetes (768 rows, 8 features). Standard train/validation/test splits with seed 42.",
+      "evaluation_set": "Heart n_test ≈ 46; diabetes n_test ≈ 116. Threshold 0.5. See Performance for AUC, calibration, and confusion matrices.",
+      "known_failure_modes": [
+        "Cohorts are older, hospital-based (heart) or specific (Pima diabetes); they do not represent all patients.",
+        "Missing labs filled or clipped to UI ranges can distort SHAP.",
+        "Sex is encoded as in the original tables; it is not a clinical sex/gender assessment.",
+        "Risk is not a 10-year ASCVD or HbA1c forecast."
+      ],
+      "intended_use": "Show which entered labs raise or lower a prototype risk score.",
+      "out_of_scope": [
+        "Pediatric risk",
+        "Medication dosing",
+        "Continuous monitoring"
+      ]
+    }
+  ]
+}

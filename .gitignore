@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.env
+
+# Raw datasets and trained artifacts (never commit source data or model binaries)
+dataset/**
+!dataset/.gitkeep
+models/**
+!models/.gitkeep
+
+# Generated reports
+reports/figures/**
+!reports/figures/.gitkeep
+reports/metrics/**
+!reports/metrics/.gitkeep
+
+# Frontend/build
+node_modules/
+dist/
+.vite/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.pytest_cache/
+.coverage

@@ -1,0 +1,714 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "HealthCure API",
+    "description": "Explainable image, text, and tabular decision-support API.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "summary": "Metrics",
+        "operationId": "metrics_api_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model-card": {
+      "get": {
+        "summary": "Model Card",
+        "operationId": "model_card_api_model_card_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image": {
+      "post": {
+        "summary": "Predict Image",
+        "operationId": "predict_image_api_image_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_predict_image_api_image_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImagePrediction"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/text": {
+      "post": {
+        "summary": "Predict Text",
+        "operationId": "predict_text_api_text_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextPrediction"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/risk": {
+      "post": {
+        "summary": "Predict Risk",
+        "operationId": "predict_risk_api_risk_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskPrediction"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/report": {
+      "post": {
+        "summary": "Predict Report",
+        "operationId": "predict_report_api_report_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_predict_image_api_image_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_predict_image_api_image_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "default": "healthcure"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse"
+      },
+      "ImagePrediction": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "probs": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Probs"
+          },
+          "gradcam_base64": {
+            "type": "string",
+            "title": "Gradcam Base64"
+          },
+          "mock": {
+            "type": "boolean",
+            "title": "Mock",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "confidence",
+          "probs",
+          "gradcam_base64"
+        ],
+        "title": "ImagePrediction"
+      },
+      "LabelScore": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "confidence"
+        ],
+        "title": "LabelScore"
+      },
+      "MetricsResponse": {
+        "properties": {
+          "image": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Image"
+          },
+          "text": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Text"
+          },
+          "tabular": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Tabular"
+          }
+        },
+        "type": "object",
+        "title": "MetricsResponse"
+      },
+      "ModelCardResponse": {
+        "properties": {
+          "product": {
+            "type": "string",
+            "title": "Product",
+            "default": "HealthCure"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "0.1.0"
+          },
+          "last_evaluated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Evaluated"
+          },
+          "intended_use": {
+            "type": "string",
+            "title": "Intended Use",
+            "default": ""
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer",
+            "default": ""
+          },
+          "modalities": {
+            "items": {
+              "$ref": "#/components/schemas/ModelModalityCard"
+            },
+            "type": "array",
+            "title": "Modalities"
+          }
+        },
+        "type": "object",
+        "title": "ModelCardResponse"
+      },
+      "ModelModalityCard": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "architecture": {
+            "type": "string",
+            "title": "Architecture"
+          },
+          "task": {
+            "type": "string",
+            "title": "Task"
+          },
+          "training_data": {
+            "type": "string",
+            "title": "Training Data"
+          },
+          "evaluation_set": {
+            "type": "string",
+            "title": "Evaluation Set"
+          },
+          "known_failure_modes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Known Failure Modes"
+          },
+          "intended_use": {
+            "type": "string",
+            "title": "Intended Use",
+            "default": ""
+          },
+          "out_of_scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Out Of Scope"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "version",
+          "architecture",
+          "task",
+          "training_data",
+          "evaluation_set"
+        ],
+        "title": "ModelModalityCard"
+      },
+      "ReportRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "dataset": {
+            "type": "string",
+            "enum": [
+              "heart",
+              "diabetes"
+            ],
+            "title": "Dataset"
+          },
+          "features": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Features"
+          },
+          "num_samples": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num Samples"
+          },
+          "image_base64": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Base64"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "dataset",
+          "features"
+        ],
+        "title": "ReportRequest"
+      },
+      "ReportResponse": {
+        "properties": {
+          "image": {
+            "$ref": "#/components/schemas/ImagePrediction"
+          },
+          "text": {
+            "$ref": "#/components/schemas/TextPrediction"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/RiskPrediction"
+          },
+          "agreement": {
+            "type": "boolean",
+            "title": "Agreement"
+          },
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis"
+          },
+          "next_step": {
+            "type": "string",
+            "title": "Next Step"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image",
+          "text",
+          "risk",
+          "agreement",
+          "diagnosis",
+          "next_step",
+          "disclaimer"
+        ],
+        "title": "ReportResponse"
+      },
+      "RiskPrediction": {
+        "properties": {
+          "risk_score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Risk Score"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "moderate",
+              "high"
+            ],
+            "title": "Level"
+          },
+          "shap_contributions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Shap Contributions"
+          },
+          "mock": {
+            "type": "boolean",
+            "title": "Mock",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk_score",
+          "level",
+          "shap_contributions"
+        ],
+        "title": "RiskPrediction"
+      },
+      "RiskRequest": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "enum": [
+              "heart",
+              "diabetes"
+            ],
+            "title": "Dataset"
+          },
+          "features": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dataset",
+          "features"
+        ],
+        "title": "RiskRequest"
+      },
+      "TextPrediction": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "top_3": {
+            "items": {
+              "$ref": "#/components/schemas/LabelScore"
+            },
+            "type": "array",
+            "title": "Top 3"
+          },
+          "lime_word_weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Lime Word Weights"
+          },
+          "mock": {
+            "type": "boolean",
+            "title": "Mock",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "confidence",
+          "top_3",
+          "lime_word_weights"
+        ],
+        "title": "TextPrediction"
+      },
+      "TextRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "num_samples": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num Samples"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "TextRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
