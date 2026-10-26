@@ -11,7 +11,7 @@ export function HeatmapViewer({ originalSrc, heatmapSrc, alt = "Chest X-ray" }: 
 
   return (
     <div className="space-y-3">
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-charcoal">
+      <div className="relative overflow-hidden rounded-card border border-border bg-card">
         <img src={originalSrc} alt={alt} className="block w-full object-contain" />
         <img
           src={heatmapSrc}
@@ -31,7 +31,7 @@ export function HeatmapViewer({ originalSrc, heatmapSrc, alt = "Chest X-ray" }: 
           onChange={(event) => setOpacity(Number(event.target.value))}
           className="w-full accent-primary"
         />
-        <span className="w-10 text-right font-display text-charcoal">{Math.round(opacity * 100)}</span>
+        <span className="w-10 text-right font-medium tabular-nums text-charcoal">{Math.round(opacity * 100)}</span>
       </label>
     </div>
   );

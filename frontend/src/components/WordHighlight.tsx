@@ -1,3 +1,5 @@
+import { cn } from "../lib/cn.ts";
+
 type WordHighlightProps = {
   text: string;
   weights: Record<string, number>;
@@ -14,6 +16,9 @@ function weightFor(token: string, weights: Record<string, number>): number | und
   return undefined;
 }
 
+const POSITIVE = ["bg-primary/10", "bg-primary/20", "bg-primary/35"];
+const NEGATIVE = ["bg-accent/10", "bg-accent/20", "bg-accent/35"];
+
 export function WordHighlight({ text, weights }: WordHighlightProps) {
   const tokens = text.split(/(\s+)/);
   const magnitudes = Object.values(weights).map((value) => Math.abs(value));
@@ -26,16 +31,13 @@ export function WordHighlight({ text, weights }: WordHighlightProps) {
         const weight = weightFor(token, weights);
         if (weight === undefined) return <span key={`${token}-${index}`}>{token}</span>;
         const intensity = Math.min(1, Math.abs(weight) / maxAbs);
-        const positive = weight >= 0;
-        const background = positive
-          ? `rgba(15, 95, 92, ${0.12 + intensity * 0.35})`
-          : `rgba(194, 96, 62, ${0.12 + intensity * 0.35})`;
+        const bucket = intensity > 0.66 ? 2 : intensity > 0.33 ? 1 : 0;
+        const tone = weight >= 0 ? POSITIVE[bucket] : NEGATIVE[bucket];
         return (
           <mark
             key={`${token}-${index}`}
             title={`${weight >= 0 ? "+" : ""}${weight.toFixed(3)}`}
-            className="rounded px-0.5"
-            style={{ backgroundColor: background, color: "#2B2724" }}
+            className={cn("rounded-sm px-0.5 text-charcoal", tone)}
           >
             {token}
           </mark>

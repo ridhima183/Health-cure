@@ -5,6 +5,7 @@ import { HistoryPage } from "./pages/History.tsx";
 import { ModelCardPage } from "./pages/ModelCardPage.tsx";
 import { PerformancePage } from "./pages/Performance.tsx";
 import { ReportPage } from "./pages/Report.tsx";
+import { cn } from "./lib/cn.ts";
 
 const links = [
   { to: "/", label: "Diagnose" },
@@ -18,19 +19,25 @@ export default function App() {
   return (
     <div className="min-h-svh bg-ivory text-charcoal">
       <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-6">
           <div>
-            <p className="font-display text-2xl text-primary">HealthCure</p>
-            <p className="text-xs uppercase tracking-wide text-muted">Decision support only</p>
+            <p className="font-display text-xl text-charcoal">HealthCure</p>
+            <p className="text-xs text-muted">Decision support only</p>
           </div>
-          <nav className="flex gap-1">
+          <nav className="flex gap-1 overflow-x-auto">
             {links.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end={link.to === "/"}
                 className={({ isActive }) =>
-                  `rounded-full px-4 py-2 text-sm ${isActive ? "bg-primary text-ivory" : "text-muted hover:bg-teal-tint"}`
+                  cn(
+                    "shrink-0 border-b-2 px-3 py-2 text-sm outline-none transition-colors duration-200",
+                    "focus-visible:ring-2 focus-visible:ring-primary/30",
+                    isActive
+                      ? "border-primary text-charcoal"
+                      : "border-transparent text-muted hover:text-charcoal",
+                  )
                 }
               >
                 {link.label}
@@ -39,7 +46,7 @@ export default function App() {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
         <Routes>
           <Route path="/" element={<DiagnosePage />} />
           <Route path="/report" element={<ReportPage />} />
@@ -48,7 +55,7 @@ export default function App() {
           <Route path="/model-card" element={<ModelCardPage />} />
         </Routes>
       </main>
-      <footer className="border-t border-border px-6 py-6 text-center text-sm text-muted">
+      <footer className="border-t border-border px-4 py-5 text-center text-xs text-muted md:px-6">
         Decision support only — not a diagnosis, prescription, or medical device. Consult a qualified clinician.
       </footer>
     </div>

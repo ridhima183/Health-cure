@@ -13,12 +13,28 @@ import {
 } from "../api/client.ts";
 import { ImageUpload } from "../components/ImageUpload.tsx";
 import { SampleCases } from "../components/SampleCases.tsx";
+import { Button } from "../components/ui/Button.tsx";
+import { Card, CardHeader } from "../components/ui/Card.tsx";
+import { controlClass, Field, SectionHeading, textareaClass } from "../components/ui/Field.tsx";
+import { PageHeader } from "../components/ui/PageHeader.tsx";
+import { SegmentedControl } from "../components/ui/SegmentedControl.tsx";
+import { StickyBar } from "../components/ui/StickyBar.tsx";
+import { ErrorState } from "../components/ui/ErrorState.tsx";
 import { compressDataUrl, listDistinctPatientIds } from "../lib/cases.ts";
-import { defaultFeatures, fieldsFor } from "../lib/features.ts";
+import { cn } from "../lib/cn.ts";
+import { encounterSchema, featuresSchema } from "../lib/featureSchema.ts";
+import { defaultFeatures, groupedFields } from "../lib/features.ts";
 import { sampleFile, type SampleCase } from "../lib/samples.ts";
 import { useSession } from "../state/SessionContext.tsx";
 
 type AnalyzeStep = "idle" | "models" | "report";
+
+const VISIT_PRESETS = [
+  "Baseline (Week 0)",
+  "Follow-up (Week 2)",
+  "Follow-up (Week 4)",
+  "Follow-up (Week 8)",
+];
 
 export function DiagnosePage() {
   const navigate = useNavigate();
@@ -39,17 +55,33 @@ export function DiagnosePage() {
   const [step, setStep] = useState<AnalyzeStep>("idle");
   const [sampleLoading, setSampleLoading] = useState<string | null>(null);
   const [sampleError, setSampleError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const existingPatients = useMemo(() => listDistinctPatientIds(), []);
-  const fields = useMemo(() => fieldsFor(dataset), [dataset]);
+  const groups = useMemo(() => groupedFields(dataset), [dataset]);
 
   function switchDataset(next: DatasetName) {
     setDataset(next);
     setFeatures(defaultFeatures(next));
+    setErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors.features;
+      for (const key of Object.keys(nextErrors)) {
+        if (key.startsWith("feat:")) delete nextErrors[key];
+      }
+      return nextErrors;
+    });
   }
 
   function onFile(next: File | null) {
     setFile(next);
+    if (next) {
+      setErrors((current) => {
+        const nextErrors = { ...current };
+        delete nextErrors.file;
+        return nextErrors;
+      });
+    }
     setPreviewUrl((current) => {
       if (current) URL.revokeObjectURL(current);
       return next ? URL.createObjectURL(next) : null;
@@ -100,6 +132,7 @@ export function DiagnosePage() {
   async function loadSample(sample: SampleCase) {
     setSampleError(null);
     setSampleLoading(sample.id);
+    setErrors({});
     try {
       const nextFile = await sampleFile(sample);
       if (sample.patientId) setPatientId(sample.patientId);
@@ -115,9 +148,40 @@ export function DiagnosePage() {
     }
   }
 
+  function validate(): boolean {
+    const nextErrors: Record<string, string> = {};
+    const encounter = encounterSchema.safeParse({ patientId, visitLabel, notes });
+    if (!encounter.success) {
+      for (const issue of encounter.error.issues) {
+        const key = String(issue.path[0] ?? "form");
+        if (!nextErrors[key]) nextErrors[key] = issue.message;
+      }
+    }
+    if (!file) nextErrors.file = "Upload a chest X-ray before analyzing.";
+    const fields = groups.flatMap((group) => group.fields);
+    const feat = featuresSchema(fields).safeParse(features);
+    if (!feat.success) {
+      for (const issue of feat.error.issues) {
+        const key = String(issue.path[0] ?? "features");
+        if (!nextErrors[`feat:${key}`]) nextErrors[`feat:${key}`] = issue.message;
+      }
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
   function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!validate()) return;
     mutation.mutate();
+  }
+
+  function onReset() {
+    setFeatures(defaultFeatures(dataset));
+    setNotes("");
+    onFile(null);
+    setErrors({});
+    setSampleError(null);
   }
 
   const errorMessage =
@@ -128,204 +192,223 @@ export function DiagnosePage() {
         : null;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      <div>
-        <h1 className="font-display text-4xl text-charcoal">Diagnose</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          Provide a chest X-ray, symptom notes, and clinical features. Analyze runs the image, text, and
-          risk models, then builds a fused report. Cases with the same Patient ID are grouped in
-          History for longitudinal tracking and baseline vs. follow-up comparisons.
-        </p>
-      </div>
+    <form onSubmit={onSubmit} className="space-y-6 pb-4">
+      <PageHeader
+        title="Diagnose"
+        description="Chest X-ray, symptom notes, and labs run through the image, text, and risk models into one report."
+      />
 
       <SampleCases onSelect={loadSample} loadingId={sampleLoading} />
-      {sampleError ? (
-        <p className="rounded-xl border border-rose bg-rose/60 px-4 py-3 text-sm text-risk-high" role="alert">
-          {sampleError}
-        </p>
-      ) : null}
+      {sampleError ? <ErrorState message={sampleError} /> : null}
 
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="font-display text-xl">Patient & Longitudinal Tracking</h2>
-            <p className="mt-1 text-sm text-muted">
-              Assign this encounter to a patient record for timeline progression and comparative scanning.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              const randNum = Math.floor(1000 + Math.random() * 9000);
-              setPatientId(`PT-${randNum}`);
-              setVisitLabel("Baseline (Week 0)");
-            }}
-            className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-primary hover:bg-teal-tint"
-          >
-            + Generate New Patient ID
-          </button>
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-charcoal">
-              Patient ID / Medical Record #
-              <input
-                type="text"
-                required
-                value={patientId}
-                onChange={(e) => setPatientId(e.target.value)}
-                placeholder="e.g. PT-1001"
-                className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-charcoal outline-none focus:ring-2 focus:ring-primary"
-              />
-            </label>
-            {existingPatients.length > 0 ? (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                <span>Existing patients:</span>
-                {existingPatients.slice(0, 4).map((pid) => (
-                  <button
-                    key={pid}
-                    type="button"
-                    onClick={() => setPatientId(pid)}
-                    className={`rounded-md px-2 py-0.5 ${
-                      patientId === pid ? "bg-primary text-ivory" : "bg-ivory hover:text-primary"
-                    }`}
-                  >
-                    {pid}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-charcoal">
-              Visit Stage / Label
-              <input
-                type="text"
-                required
-                value={visitLabel}
-                onChange={(e) => setVisitLabel(e.target.value)}
-                placeholder="e.g. Baseline (Week 0) or Follow-up (Week 4)"
-                className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-charcoal outline-none focus:ring-2 focus:ring-primary"
-              />
-            </label>
-            <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-muted">
-              {["Baseline (Week 0)", "Follow-up (Week 2)", "Follow-up (Week 4)", "Follow-up (Week 8)"].map(
-                (stage) => (
-                  <button
-                    key={stage}
-                    type="button"
-                    onClick={() => setVisitLabel(stage)}
-                    className={`rounded-md px-2 py-0.5 ${
-                      visitLabel === stage ? "bg-primary text-ivory" : "bg-ivory hover:text-primary"
-                    }`}
-                  >
-                    {stage}
-                  </button>
-                ),
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="font-display text-xl">1. Chest X-ray</h2>
-        <div className="mt-4">
-          <ImageUpload file={file} previewUrl={previewUrl} onFile={onFile} />
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="font-display text-xl">2. Symptom notes</h2>
-        <textarea
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          rows={5}
-          required
-          minLength={1}
-          placeholder="e.g. cough, fever, and shortness of breath for three days"
-          className="mt-4 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-charcoal outline-none focus:ring-2 focus:ring-primary"
+      <Card>
+        <CardHeader
+          title="Patient"
+          description="Same ID groups visits in History for baseline vs follow-up comparison."
+          action={
+            <Button
+              variant="text"
+              size="sm"
+              onClick={() => {
+                const randNum = Math.floor(1000 + Math.random() * 9000);
+                setPatientId(`PT-${randNum}`);
+                setVisitLabel("Baseline (Week 0)");
+              }}
+            >
+              New patient ID
+            </Button>
+          }
         />
-      </section>
-
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-xl">3. Clinical features</h2>
-          <div className="inline-flex rounded-full bg-teal-tint p-1 text-sm">
-            {(["heart", "diabetes"] as const).map((option) => (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field id="patientId" label="Patient ID" error={errors.patientId}>
+            <input
+              id="patientId"
+              type="text"
+              value={patientId}
+              onChange={(e) => setPatientId(e.target.value)}
+              placeholder="PT-1001"
+              aria-invalid={Boolean(errors.patientId)}
+              aria-describedby={errors.patientId ? "patientId-error" : undefined}
+              className={controlClass}
+            />
+          </Field>
+          <Field id="visitLabel" label="Visit" error={errors.visitLabel}>
+            <input
+              id="visitLabel"
+              type="text"
+              value={visitLabel}
+              onChange={(e) => setVisitLabel(e.target.value)}
+              placeholder="Baseline (Week 0)"
+              aria-invalid={Boolean(errors.visitLabel)}
+              aria-describedby={errors.visitLabel ? "visitLabel-error" : undefined}
+              className={controlClass}
+            />
+          </Field>
+        </div>
+        {existingPatients.length > 0 ? (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+            <span>Patients</span>
+            {existingPatients.slice(0, 4).map((pid) => (
               <button
-                key={option}
+                key={pid}
                 type="button"
-                onClick={() => switchDataset(option)}
-                className={`rounded-full px-4 py-1.5 capitalize ${
-                  dataset === option ? "bg-primary text-ivory" : "text-primary"
-                }`}
+                onClick={() => setPatientId(pid)}
+                className={cn(
+                  "rounded-field border px-2 py-1 outline-none transition-colors duration-200",
+                  "focus-visible:ring-2 focus-visible:ring-primary/30",
+                  patientId === pid
+                    ? "border-primary bg-card text-charcoal"
+                    : "border-border bg-card hover:text-charcoal",
+                )}
               >
-                {option}
+                {pid}
               </button>
             ))}
           </div>
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {fields.map((field) => (
-            <label key={field.name} className="block text-sm">
-              <span className="font-medium text-charcoal">{field.label}</span>
-              <span className="ml-2 text-muted">{field.hint}</span>
-              {field.kind === "select" && field.options ? (
-                <select
-                  value={features[field.name]}
-                  onChange={(event) =>
-                    setFeatures((current) => ({ ...current, [field.name]: Number(event.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {field.options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="number"
-                  required
-                  min={field.min}
-                  max={field.max}
-                  step={field.step}
-                  value={features[field.name]}
-                  onChange={(event) =>
-                    setFeatures((current) => ({ ...current, [field.name]: Number(event.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
-                />
+        ) : null}
+        <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-muted">
+          {VISIT_PRESETS.map((stage) => (
+            <button
+              key={stage}
+              type="button"
+              onClick={() => setVisitLabel(stage)}
+              className={cn(
+                "rounded-field border px-2 py-1 outline-none transition-colors duration-200",
+                "focus-visible:ring-2 focus-visible:ring-primary/30",
+                visitLabel === stage
+                  ? "border-primary bg-card text-charcoal"
+                  : "border-border bg-card hover:text-charcoal",
               )}
-              <span className="mt-1 block text-xs text-muted">
-                Range {field.min}–{field.max}
-              </span>
-            </label>
+            >
+              {stage}
+            </button>
           ))}
         </div>
-      </section>
+      </Card>
 
-      {errorMessage ? (
-        <p className="rounded-xl border border-rose bg-rose/60 px-4 py-3 text-sm text-risk-high" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Chest X-ray" />
+          <ImageUpload file={file} previewUrl={previewUrl} onFile={onFile} />
+          {errors.file ? (
+            <p className="mt-2 text-xs text-risk-high" role="alert">
+              {errors.file}
+            </p>
+          ) : null}
+        </Card>
 
-      {mutation.isPending ? (
-        <p className="text-sm text-muted" aria-live="polite">
-          {step === "report" ? "Building fused report…" : "Running image, text, and risk models…"}
-        </p>
-      ) : null}
+        <Card>
+          <CardHeader title="Symptom notes" />
+          <Field id="notes" label="Notes" error={errors.notes}>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              rows={8}
+              placeholder="Cough, fever, and shortness of breath for three days"
+              aria-invalid={Boolean(errors.notes)}
+              aria-describedby={errors.notes ? "notes-error" : undefined}
+              className={textareaClass}
+            />
+          </Field>
+        </Card>
+      </div>
 
-      <button
-        type="submit"
-        disabled={mutation.isPending}
-        className="rounded-full bg-primary px-6 py-3 font-medium text-ivory disabled:opacity-60"
+      <Card>
+        <CardHeader
+          title="Clinical features"
+          action={
+            <SegmentedControl
+              ariaLabel="Risk dataset"
+              value={dataset}
+              onChange={switchDataset}
+              options={[
+                { value: "heart", label: "Heart" },
+                { value: "diabetes", label: "Diabetes" },
+              ]}
+            />
+          }
+        />
+        {groups.map((group) => (
+          <div key={group.title}>
+            <SectionHeading>{group.title}</SectionHeading>
+            <div className="grid items-start gap-4 md:grid-cols-2">
+              {group.fields.map((field) => {
+                const error = errors[`feat:${field.name}`];
+                const range = `${field.min}–${field.max}`;
+                return (
+                  <Field
+                    key={field.name}
+                    id={field.name}
+                    label={field.label}
+                    unit={field.kind === "number" ? field.unit : undefined}
+                    hint={field.hint}
+                    error={error}
+                  >
+                    {field.kind === "select" && field.options ? (
+                      <select
+                        id={field.name}
+                        value={features[field.name]}
+                        onChange={(event) =>
+                          setFeatures((current) => ({
+                            ...current,
+                            [field.name]: Number(event.target.value),
+                          }))
+                        }
+                        aria-invalid={Boolean(error)}
+                        className={controlClass}
+                      >
+                        {field.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        id={field.name}
+                        type="number"
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                        value={features[field.name]}
+                        placeholder={range}
+                        onChange={(event) =>
+                          setFeatures((current) => ({
+                            ...current,
+                            [field.name]: Number(event.target.value),
+                          }))
+                        }
+                        aria-invalid={Boolean(error)}
+                        className={cn(controlClass, field.unit ? "pr-12" : undefined)}
+                      />
+                    )}
+                  </Field>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </Card>
+
+      {errorMessage ? <ErrorState message={errorMessage} /> : null}
+
+      <StickyBar
+        status={
+          mutation.isPending
+            ? step === "report"
+              ? "Building fused report…"
+              : "Running image, text, and risk models…"
+            : null
+        }
       >
-        {mutation.isPending ? "Analyzing…" : "Analyze"}
-      </button>
+        <Button variant="ghost" onClick={onReset} disabled={mutation.isPending}>
+          Reset
+        </Button>
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? "Analyzing…" : "Analyze"}
+        </Button>
+      </StickyBar>
     </form>
   );
 }

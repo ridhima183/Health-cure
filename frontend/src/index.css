@@ -13,8 +13,15 @@
   --color-risk-low: #5e8c6a;
   --color-risk-mid: #e0a93b;
   --color-risk-high: #7a2e3a;
+  --color-track: #eee8df;
+  --color-grid: #f3eee6;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --radius-field: 0.5rem;
+  --radius-card: 0.75rem;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.25rem;
+  --text-label--font-weight: 500;
 }
 
 html,
@@ -35,6 +42,22 @@ h2,
 h3,
 .font-display {
   font-family: var(--font-display);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @media print {
